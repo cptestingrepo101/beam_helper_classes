@@ -2,7 +2,7 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions, SetupOptions, GoogleCloudOptions
 
 
-__all__ = ['Output', 'SplitByDelimiter', 'FormatToDict', 'SplitToDict',  'Dtype_Transform', 'InnerJoin']
+__all__ = ['Output', 'SplitByDelimiter', 'FormatToDict', 'SplitToDict',  'Dtype_Transform', 'InnerJoin', 'Get_Dtypes']
 
 
 class Output(beam.PTransform, beam.DoFn):
@@ -130,4 +130,15 @@ class InnerJoin(beam.PTransform, beam.DoFn):
                     >> beam.Map(_format_as_common_key_tuple, self.join_keys[pcoll_name]) for (pcoll_name, pcoll) in pcolls.items()}
                 | f'CoGroupByKey {pcolls.keys()}' >> beam.CoGroupByKey()
                 | 'Inner Join Rows' >> beam.ParDo(self.process, left_pcoll_name=self.left_pcoll_name, right_pcoll_name=self.right_pcoll_name))
+
+class Get_Dtypes(beam.PTransform, beam.DoFn):
+    def process(self, element):
+        dtype_dict = {}
+        for key in element.keys():
+            dtype = type(element[key])
+            dtype_dict.update({key: dtype})
+        yield [dtype_dict]
+    
+    def expand(self, pcoll):
+        return (pcoll | beam.ParDo(self.process))
    

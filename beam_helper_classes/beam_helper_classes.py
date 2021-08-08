@@ -2,7 +2,7 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions, SetupOptions, GoogleCloudOptions
 
 
-__all__ = ['Output', 'SplitByDelimiter', 'FormatToDict', 'SplitToDict',  'Dtype_Transform', 'InnerJoin', 'Get_Dtypes']
+__all__ = ['Output', 'SplitByDelimiter', 'FormatToDict', 'SplitToDict',  'Dtype_Transform', 'InnerJoin', 'Get_Dtypes', 'create_pipeline', 'RunLambda']
 
 
 class Output(beam.PTransform, beam.DoFn):
@@ -141,4 +141,23 @@ class Get_Dtypes(beam.PTransform, beam.DoFn):
     
     def expand(self, pcoll):
         return (pcoll | beam.ParDo(self.process))
+
+
+class RunLambda(beam.PTransform):
+    def __init__(self, lambda_type: str, lambda_func: str):
+        self.lambda_type = lambda_type
+        self.lambda_func = lambda_func
+        
+    def expand(self, pcoll):
+        if self.lambda_type == 'map':
+            return (pcoll | beam.Map(eval(self.lambda_func)))
+        elif self.lambda_type == 'filter':
+            return (pcoll | beam.Filter(eval(self.lambda_func)))
+        else:
+            print(f"{self.lambda_type} not recognised. Must be either `map` or `filter`.")
+
+
+def create_pipeline(pipeline_options: dict):
+    p = beam.Pipeline(options=PipelineOptions().from_dictionary({**pipeline_options}))
+    return p
    

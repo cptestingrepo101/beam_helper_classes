@@ -2,10 +2,35 @@ import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions, SetupOptions, GoogleCloudOptions
 
 
-__all__ = ['Output', 'SplitByDelimiter', 'FormatToDict', 'SplitToDict',  'Dtype_Transform', 'InnerJoin', 'Get_Dtypes', 'create_pipeline', 'RunLambda']
+__all__ = [
+'ReadLocal',
+'Output',
+'SplitByDelimiter',
+'FormatToDict',
+'SplitToDict',
+'Dtype_Transform', 
+'InnerJoin', 
+'Get_Dtypes', 
+'create_pipeline', 
+'RunLambda']
 
+
+class ReadLocal(beam.PTransform):
+    """Class for reading from a local file.
+
+    Args:
+        file_path (str): The relative path to the file.
+        skip_lines (int): The number of lines to skip when reading the file.
+    """
+    def __init__(self, file_path: str, skip_lines: int):
+        self.file_path = file_path
+        self.skip_lines = skip_lines
+    
+    def expand(self, pcoll):
+        return (pcoll | beam.io.ReadFromText(file_pattern=self.file_path, skip_header_lines=self.skip_lines))
 
 class Output(beam.PTransform, beam.DoFn):
+    """Class for printing a pcollection object to the console."""
     def process(self, element):
         yield print(element)
     
